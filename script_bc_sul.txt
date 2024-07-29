@@ -1,0 +1,326 @@
+#Região Sul
+
+library(summarytools)
+library(basedosdados)
+library(dplyr)
+library(readr)
+library(readxl)
+library(writexl)
+library(stringr)
+library(lubridate)
+library(magrittr)
+library(scales)
+library(ggplot2)
+library(gganimate)
+library(tidyr)
+library(transformr)
+library(plotly)
+library(hrbrthemes)
+library(ggthemes)
+
+rm(list=ls())
+
+set_billing_id("centered-router-387500")
+
+# Exportação Paraná
+
+query.PR.E <- "SELECT  ano,mes,id_sh4,id_pais,sigla_uf,id_municipio,valor_fob_dolar FROM
+`basedosdados.br_me_comex_stat.municipio_exportacao`WHERE ano BETWEEN 
+        2000 AND 2022 AND id_municipio LIKE '41%'"
+
+TotalExp <- read_sql(query.PR.E)
+
+str(TotalExp)
+
+# Alterando as váriaveis necessárias para número
+
+PRTotal <- TotalExp %>% 
+  mutate(ID.pais.novo=as.numeric(TotalExp$id_pais)) %>% 
+  mutate(Exp.FOB.PR=as.numeric(TotalExp$valor_fob_dolar)) %>% 
+  mutate(Ano=as.numeric(TotalExp$ano))
+
+str(PRTotal)
+
+# Excluindo variáveis duplicadas
+
+excluir <- c("ano","valor_fob_dolar","id_pais")
+Dados_PR <- PRTotal [,!names(PRTotal)%in%excluir]
+
+str(Dados_PR)
+
+# Agrupando por ano e município 
+# Utilizando a função summarise do pacote dplyr para somar as exportações de cada ano
+
+PRTotal3 <- Dados_PR %>% 
+  group_by(Ano) %>% 
+  summarise(EXP.fob_PR = sum(Exp.FOB.PR, na.rm = T))
+
+
+# Importação Paraná
+
+query.PR.I <- "SELECT  ano,mes,id_sh4,id_pais,sigla_uf,id_municipio,valor_fob_dolar FROM
+`basedosdados.br_me_comex_stat.municipio_importacao`WHERE ano BETWEEN 
+        2000 AND 2022 AND id_municipio LIKE '41%'"
+
+TotalImp <- read_sql(query.PR.I)
+
+str(TotalImp)
+
+# Alterando váriaveis necessárias para número
+
+PRImp <- TotalImp %>% 
+  mutate(id_pais_Imp=as.numeric(TotalImp$id_pais)) %>% 
+  mutate(Imp_FOB_PR=as.numeric(TotalImp$valor_fob_dolar)) %>% 
+  mutate(Ano=as.numeric(TotalImp$ano))
+
+str(PRImp)  
+
+# Excluindo variáveis duplicadas
+
+PRImpTotal <- PRImp
+excluir <- c("valor_fob_dolar","id_pais","ano")
+Dados_Imp_PR <- PRImp[,!names(PRImp)%in%excluir]
+
+str(Dados_Imp_PR)
+
+# Agrupando por ano e município 
+# Utilizando a função summarise do pacote dplyr para somar as exportações de cada ano
+
+PRImp3 <- Dados_Imp_PR %>% 
+  group_by(Ano) %>% 
+  summarise(Imp_PR_FOB=sum(Imp_FOB_PR,na.rm=T))
+
+
+# Cálculo para encotrar o saldo da balança comercial de Foz do Iguaçu
+
+data.frame(PRTotal3,PRImp3)
+
+ExpImpPR <- data.frame(PRTotal3,PRImp3)
+
+
+SBCPR <- left_join(PRTotal3, PRImp3, by = "Ano") %>%
+  mutate(ExpImpPR = EXP.fob_PR - Imp_PR_FOB) %>%
+  select(Ano, ExpImpPR)
+############################ SANTA CATARINA
+
+query.SC.E <- "SELECT  ano,mes,id_sh4,id_pais,sigla_uf,id_municipio,valor_fob_dolar FROM
+`basedosdados.br_me_comex_stat.municipio_exportacao`WHERE ano BETWEEN 
+        2000 AND 2022 AND id_municipio LIKE '42%'"
+
+TotalExp_SC <- read_sql(query.SC.E)
+
+str(TotalExp_SC)
+
+# Alterando as váriaveis necessárias para número
+
+SCTotal <- TotalExp_SC %>% 
+  mutate(ID.pais.novo=as.numeric(TotalExp_SC$id_pais)) %>% 
+  mutate(Exp.FOB.SC=as.numeric(TotalExp_SC$valor_fob_dolar)) %>% 
+  mutate(Ano=as.numeric(TotalExp_SC$ano))
+
+str(SCTotal)
+
+# Excluindo variáveis duplicadas
+
+excluir <- c("ano","valor_fob_dolar","id_pais")
+Dados_SC <- SCTotal [,!names(SCTotal)%in%excluir]
+
+str(Dados_SC)
+
+# Agrupando por ano e município 
+# Utilizando a função summarise do pacote dplyr para somar as exportações de cada ano
+
+SCTotal3 <- Dados_SC %>% 
+  group_by(Ano) %>% 
+  summarise(Exp.FOB.SC = sum(Exp.FOB.SC, na.rm = T))
+
+# Importação SC
+
+query.SC.I <- "SELECT  ano,mes,id_sh4,id_pais,sigla_uf,id_municipio,valor_fob_dolar FROM
+`basedosdados.br_me_comex_stat.municipio_importacao`WHERE ano BETWEEN 
+        2000 AND 2022 AND id_municipio LIKE '42%'"
+
+TotalImp_SC <- read_sql(query.SC.I)
+
+str(TotalImp_SC)
+
+# Alterando váriaveis necessárias para número
+
+SCImp <- TotalImp_SC %>% 
+  mutate(id_pais_Imp=as.numeric(TotalImp_SC$id_pais)) %>% 
+  mutate(Imp_FOB_SC=as.numeric(TotalImp_SC$valor_fob_dolar)) %>% 
+  mutate(Ano=as.numeric(TotalImp_SC$ano))
+
+str(SCImp)  
+
+# Excluindo variáveis duplicadas
+
+SCImpTotal <- SCImp
+excluir <- c("valor_fob_dolar","id_pais","ano")
+Dados_Imp_SC <- SCImp[,!names(SCImp)%in%excluir]
+
+str(Dados_Imp_SC)
+
+# Agrupando por ano e município 
+# Utilizando a função summarise do pacote dplyr para somar as exportações de cada ano
+
+SCImp3 <- Dados_Imp_SC %>% 
+  group_by(Ano) %>% 
+  summarise(Imp_SC_FOB=sum(Imp_FOB_SC,na.rm=T))
+
+
+# Cálculo para encotrar o saldo da balança comercial de Foz do Iguaçu
+
+data.frame(SCTotal3,SCImp3)
+
+ExpImpSC <- data.frame(SCTotal3,SCImp3)
+
+SBCSC <- left_join(SCTotal3, SCImp3, by = "Ano") %>%
+  mutate(ExpImpSC = Exp.FOB.SC - Imp_SC_FOB) %>%
+  select(Ano, ExpImpSC)
+
+
+###################### RIO GRANDE DO SUL
+
+query.RS.E <- "SELECT  ano,mes,id_sh4,id_pais,sigla_uf,id_municipio,valor_fob_dolar FROM
+`basedosdados.br_me_comex_stat.municipio_exportacao`WHERE ano BETWEEN 
+        2000 AND 2022 AND id_municipio LIKE '43%'"
+
+TotalExp_RS <- read_sql(query.RS.E)
+
+str(TotalExp_SC)
+
+# Alterando as váriaveis necessárias para número
+
+RSTotal <- TotalExp_RS %>% 
+  mutate(ID.pais.novo=as.numeric(TotalExp_RS$id_pais)) %>% 
+  mutate(Exp.FOB.RS=as.numeric(TotalExp_RS$valor_fob_dolar)) %>% 
+  mutate(Ano=as.numeric(TotalExp_RS$ano))
+
+str(RSTotal)
+
+# Excluindo variáveis duplicadas
+
+excluir <- c("ano","valor_fob_dolar","id_pais")
+Dados_RS <- RSTotal [,!names(RSTotal)%in%excluir]
+
+str(Dados_RS)
+
+# Agrupando por ano e município 
+# Utilizando a função summarise do pacote dplyr para somar as exportações de cada ano
+
+RSTotal3 <- Dados_RS %>% 
+  group_by(Ano) %>% 
+  summarise(Exp.FOB.RS = sum(Exp.FOB.RS, na.rm = T))
+
+# Importação RS
+
+query.RS.I <- "SELECT  ano,mes,id_sh4,id_pais,sigla_uf,id_municipio,valor_fob_dolar FROM
+`basedosdados.br_me_comex_stat.municipio_importacao`WHERE ano BETWEEN 
+        2000 AND 2022 AND id_municipio LIKE '43%'"
+
+TotalImp_RS <- read_sql(query.RS.I)
+
+str(TotalImp_RS)
+
+# Alterando váriaveis necessárias para número
+
+RSImp <- TotalImp_RS %>% 
+  mutate(id_pais_Imp=as.numeric(TotalImp_RS$id_pais)) %>% 
+  mutate(Imp_FOB_RS=as.numeric(TotalImp_RS$valor_fob_dolar)) %>% 
+  mutate(Ano=as.numeric(TotalImp_RS$ano))
+
+str(RSImp)  
+
+# Excluindo variáveis duplicadas
+
+RSImpTotal <- RSImp
+excluir <- c("valor_fob_dolar","id_pais","ano")
+Dados_Imp_RS <- RSImp[,!names(RSImp)%in%excluir]
+
+str(Dados_Imp_RS)
+
+# Agrupando por ano e município 
+# Utilizando a função summarise do pacote dplyr para somar as exportações de cada ano
+
+RSImp3 <- Dados_Imp_RS %>% 
+  group_by(Ano) %>% 
+  summarise(Imp_RS_FOB=sum(Imp_FOB_RS,na.rm=T))
+
+
+# Cálculo para encotrar o saldo da balança comercial de Foz do Iguaçu
+
+data.frame(RSTotal3,RSImp3)
+
+ExpImpRS <- data.frame(RSTotal3,RSImp3)
+
+SBCRS <- left_join(RSTotal3, RSImp3, by = "Ano") %>%
+  mutate(ExpImpRS = Exp.FOB.RS - Imp_RS_FOB) %>%
+  select(Ano, ExpImpRS)
+
+# Reorganizando a tabela adicionando uma nova coluna "vars"
+
+
+SBC_Total <- left_join(SBCPR, SBCSC, by = "Ano") %>%
+  left_join(SBCRS, by = "Ano") %>%
+  mutate(Saldo = ExpImpPR + ExpImpSC + ExpImpRS)
+
+
+#GRÁFICO
+
+grafico_linha <- ggplot(SBC_Total, aes(x = Ano)) +
+  geom_line(aes(y = ExpImpPR, color = "Exportações/Importações PR"), size = 1.2) +
+  geom_line(aes(y = ExpImpSC, color = "Exportações/Importações SC"), size = 1.2) +
+  geom_line(aes(y = ExpImpRS, color = "Exportações/Importações RS"), size = 1.2) +
+  geom_hline(yintercept = 0, color = "black", size = 0.1) +
+  labs(x = "Ano", y = "Saldo da Balança Comercial", title = "Saldo da Balança Comercial por Estado",
+       subtitle = "Exportações - Importações por Estado", caption = "Fonte: Sua Fonte de Dados") +
+  theme_light() +
+  theme(legend.position = "top",
+        panel.background = element_rect(fill = "white", color = "white"),
+        panel.border = element_rect(color = "black", fill = NA, size = 1),
+        panel.grid.major = element_line(color = "azure2"),
+        panel.grid.minor = element_line(color = "azure2"),
+        plot.title = element_text(face = "bold", size = 20, hjust = 0, vjust = 1),
+        plot.subtitle = element_text(face = "bold", size = 16, hjust = 0, vjust = 1),
+        axis.text.x.bottom = element_text(size = 10, face = "bold", color = "black"),
+        axis.text.y.left = element_text(size = 10, face = "bold", color = "black"),
+        axis.title.y.left = element_text(size = 12, face = "italic", color = "black"),
+        axis.text.y.right = element_text(size = 10, face = "bold", color = "black"),
+        axis.title.y.right = element_text(size = 12, face = "italic", color = "black"),
+        plot.margin = margin(2, 2, 2, 2, "cm"),
+        legend.text = element_text(face = "bold"))
+
+
+ggplotly(grafico_linha)
+
+
+
+
+
+
+grafico_linha <- ggplot(SBC_Total, aes(x = Ano)) +
+  geom_line(aes(y = ExpImpPR, color = "Exportações/Importações PR"), size = 1.2) +
+  geom_line(aes(y = ExpImpSC, color = "Exportações/Importações SC"), size = 1.2) +
+  geom_line(aes(y = ExpImpRS, color = "Exportações/Importações RS"), size = 1.2) +
+  geom_hline(yintercept = 0, color = "black", size = 0.1) +
+  labs(x = "Ano", y = "Saldo da Balança Comercial", title = "Saldo da Balança Comercial por Estado",
+       subtitle = "Exportações - Importações por Estado", caption = "Fonte: Sua Fonte de Dados") +
+  scale_y_continuous(labels = dollar_format(prefix = "$"))+
+  theme_light() +
+  theme(legend.position = "top",
+        panel.background = element_rect(fill = "white", color = "white"),
+        panel.border = element_rect(color = "black", fill = NA, size = 1),
+        panel.grid.major = element_line(color = "azure2"),
+        panel.grid.minor = element_line(color = "azure2"),
+        plot.title = element_text(face = "bold", size = 20, hjust = 0, vjust = 1),
+        plot.subtitle = element_text(face = "bold", size = 16, hjust = 0, vjust = 1),
+        axis.text.x.bottom = element_text(size = 10, face = "bold", color = "black"),
+        axis.text.y.left = element_text(size = 10, face = "bold", color = "black"),
+        axis.title.y.left = element_text(size = 12, face = "italic", color = "black"),
+        axis.text.y.right = element_text(size = 10, face = "bold", color = "black"),
+        axis.title.y.right = element_text(size = 12, face = "italic", color = "black"),
+        plot.margin = margin(2, 2, 2, 2, "cm"),
+        legend.text = element_text(face = "bold"))
+
+ggplotly(grafico_linha)
